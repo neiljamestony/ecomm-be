@@ -10,9 +10,9 @@ const ProductSchema = new Schema<IProduct>({
     type: String,
     required: true,
   },
-  category: {
-    type: String,
-    required: true,
+  categoryId: {
+    type: Schema.Types.ObjectId,
+    reference: "Category",
   },
   description: {
     type: String,
