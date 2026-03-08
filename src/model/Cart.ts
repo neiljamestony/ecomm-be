@@ -2,21 +2,21 @@ import { Schema, model } from "mongoose";
 import { ICart } from "../interface/model";
 
 const CartSchema = new Schema<ICart>({
-    productName: {
-        type: String,
-        required: true
+    productId: {
+        type: Schema.Types.ObjectId,
+        ref: "Product"
     },
     unitPrice: {
-        type: String,
+        type: Number,
         required: true
     },
     quantity: {
-        type: String,
+        type: Number,
         required: true
     },
-    owner: {
-        type: String,
-        required: false
+    ownerId: {
+        type: Schema.Types.ObjectId,
+        ref: "User"
     }
 })
 

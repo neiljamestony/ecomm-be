@@ -1,14 +1,13 @@
 import { Request, Response, NextFunction } from "express";
-import { unauthorizedRequest, somethingWentWrong } from "../utils/global";
 import { env } from "../utils/env";
-import { AuthHeader } from "../interface/model";
+import { AuthHeader, AuthErrorCode } from "../interface/model";
 import jwt, { JsonWebTokenError, TokenExpiredError, NotBeforeError } from "jsonwebtoken";
 
 export const checkIfAuthorized = (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization ?? "";
-
+    
     if(!authHeader || !authHeader.startsWith("Bearer ")){
-        res.status(401).json({msg: unauthorizedRequest, data: [] })
+        res.status(401).json({ msg: AuthErrorCode.UNAUTHORIZED, data: [] })
     }
 
     const token = authHeader.split(' ')[1];
@@ -16,19 +15,21 @@ export const checkIfAuthorized = (req: Request, res: Response, next: NextFunctio
         if(error){
             if(error instanceof JsonWebTokenError){
                 if(error instanceof TokenExpiredError){
-                    console.log(error.message) // token expired
-                    return res.status(401).json({ msg: unauthorizedRequest, data: [] })
+                    console.log(error.message) // Token Expired
+                    return res.json({ msg: AuthErrorCode.TOKEN_EXPIRED, data: [], status: 401 })
                 }
                 if(error instanceof NotBeforeError){
-                    console.log(error.message) // token is not active to use yet
-                    return res.status(401).json({ msg: unauthorizedRequest, data: [] })
+                    console.log(error.message) // Token is not valid to use
+                    return res.json({ msg: AuthErrorCode.UNAUTHORIZED, data: [], status: 401 })
                 }
-                console.log(error.message) // token malformed
-                return res.status(401).json({ msg: unauthorizedRequest, data: [] })
+                console.log(error.message) // Token malformed
+                return res.json({ msg: AuthErrorCode.INVALID_TOKEN, data: [], status: 401 })
+            }else{
+                return res.json({ msg: `${AuthErrorCode.SOMETHING_WENT_WRONG} ${error}`, data: [], status: 401 })
             }
-            return res.status(401).json({ msg: somethingWentWrong + error, data: [] })
+        }else{
+            req.user = decoded as AuthHeader;
+            next();
         }
-        req.user = decoded as AuthHeader;
-        next();
     });
 }

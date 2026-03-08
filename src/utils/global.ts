@@ -5,10 +5,14 @@ import jwt from "jsonwebtoken";
 import { env } from "./env";
 
 export const generateToken = (payload: object) =>
-  jwt.sign(payload, env.authSecret, { expiresIn: "5s" });
+  jwt.sign(payload, env.authSecret, { expiresIn: "7d" });
 
 export const isValidEmail = (email: string) =>
   RegExp(/^[^\s@]+@[^\s@]+\.[^\s@]+$/).test(email);
+
+export function hasLettersAndSpacesOnly(input: string): boolean {
+  return /^[A-Za-z]+(?:\s+[A-Za-z]+)*$/.test(input.trim());
+}
 
 export const checkPort = (port: number): Promise<boolean> => {
   return new Promise((resolve, reject) => {
@@ -38,28 +42,32 @@ export const findAvailablePort = async (port: number): Promise<number> => {
 };
 
 export const handleFieldValidation = (formData: any) => {
-  let stringLength: number = 10;
+  let stringLength: number = 2;
   let passwordLength: number = 20;
   let phoneNumberLength: number = 11;
   let errors: string[] = [];
   Object.keys(formData).forEach((v) => {
+    console.log(v)
     const value = formData[v];
     // check if empty
-    if (value === "" || value === " ") errors.push(`${v} is required`);
+    if(v === "firstName" || v === "lastName"){
+      if(!hasLettersAndSpacesOnly(value)) errors.push(`no special character for ${v}!`);
+    }
+    if (value === "" || value === " ") errors.push(`${v} is required!`);
 
     // check if valid email
-    if (v === "email" && !isValidEmail(value)) errors.push("invalid email");
+    if (v === "email" && !isValidEmail(value)) errors.push("invalid email!");
 
     // check string length
     if (
-      (v === "email" || v === "fname" || v === "lname") &&
-      value.length <= stringLength
+      (v === "email" || v === "firstName" || v === "lastName") &&
+      value.length < stringLength
     )
-      errors.push(`${v} should be atleast ${stringLength} characters`);
+      errors.push(`${v} should be atleast ${stringLength} characters!`);
 
     // check password length
     if (v === "password" && value.length > passwordLength)
-      errors.push(`${v} should be atleast ${passwordLength} characters`);
+      errors.push(`${v} should be atleast ${passwordLength} characters!`);
 
     if (v === "phoneNumber") {
       // check if number
@@ -69,10 +77,10 @@ export const handleFieldValidation = (formData: any) => {
           value.length < phoneNumberLength ||
           value.length > phoneNumberLength
         ) {
-          errors.push(`${v} should be atleast ${phoneNumberLength} characters`);
+          errors.push(`${v} should be atleast ${phoneNumberLength} characters!`);
         }
       } else {
-        errors.push("invalid phone number");
+        errors.push("invalid phone number!");
       }
     }
 
@@ -88,7 +96,3 @@ export const generateHash = async (data: string) => {
 
 export const validateHashed = async (input: string, reference: any) =>
   await bcrypt.compare(input, reference);
-
-export const somethingWentWrong: string = "Something went wrong, please try again!";
-
-export const unauthorizedRequest = "Unauthorized, invalid request!";

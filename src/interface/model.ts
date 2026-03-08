@@ -26,10 +26,10 @@ export interface ICategory {
 }
 
 export interface ICart {
-  productName: string;
-  unitPrice: string;
-  quantity: string;
-  owner?: string;
+  productId: Types.ObjectId;
+  unitPrice: number;
+  quantity: number;
+  ownerId: Types.ObjectId;
 }
 
 export interface AuthHeader extends JwtPayload {
@@ -41,4 +41,22 @@ export interface Inventory {
   productId: Types.ObjectId;
   costumerId: Types.ObjectId;
   quantity: string;
+}
+
+export interface AuthErrorCode {
+  TOKEN_EXPIRED: string,
+  INVALID_TOKEN: string,
+  UNAUTHORIZED: string,
+  SOMETHING_WENT_WRONG: string,
+  PHONE_NUMBER_EXISTS: string,
+  USER_EXISTS: string,
+}
+
+export const AuthErrorCode: AuthErrorCode = {
+  TOKEN_EXPIRED: "Token expired, please login again!",
+  INVALID_TOKEN: "Authentication failed, please login again!",
+  UNAUTHORIZED: "Unauthorized, Invalid request!",
+  SOMETHING_WENT_WRONG: "Something went wrong, please try again later!",
+  PHONE_NUMBER_EXISTS: "Phone number already exists!",
+  USER_EXISTS: "User already exists!"
 }

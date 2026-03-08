@@ -18,7 +18,7 @@ router.get("/get-products", getAllProducts);
 router.post("/get-product-by-id", getProductById);
 router.get("/get-categories", getAllProductsCategory);
 router.post("/add-to-cart", checkIfAuthorized, addToCart);
-router.get("/get-cart-items", checkIfAuthorized, getCartItems);
+router.post("/get-cart-items", checkIfAuthorized, getCartItems);
 router.post("/buy-now", checkIfAuthorized, buyNow);
 
 export default router;

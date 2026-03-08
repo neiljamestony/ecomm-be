@@ -12,7 +12,7 @@ const ProductSchema = new Schema<IProduct>({
   },
   categoryId: {
     type: Schema.Types.ObjectId,
-    reference: "Category",
+    ref: "Category",
   },
   description: {
     type: String,

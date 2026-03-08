@@ -4,11 +4,11 @@ import { Inventory } from "../interface/model";
 const InventorySchema = new Schema<Inventory>({
     productId: {
         type: Schema.Types.ObjectId,
-        reference: "Product"
+        ref: "Product"
     },
     costumerId: {
         type: Schema.Types.ObjectId,
-        reference: "User"
+        ref: "User"
     },
     quantity:{
         type: String,

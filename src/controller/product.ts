@@ -3,7 +3,7 @@ import ProductModel from "../model/Product";
 import CategoryModel from "../model/Category";
 import CartModel from "../model/Cart";
 import InventoryModel from "../model/Inventory";
-import { somethingWentWrong } from "../utils/global";
+import { AuthErrorCode } from "../interface/model";
 
 export const insertProduct = async (req: Request, res: Response) => {
   res.json(req.body);
@@ -14,51 +14,56 @@ export const insertProduct = async (req: Request, res: Response) => {
 export const addToCart = async (req: Request, res: Response) => {
   try{
     const cart = req.body;
-    const addedToCart = await CartModel.create(cart);
-    if(addedToCart){
-      return res.status(201).json({ msg: "Successfully added into your cart!" })
+    const productId = cart.productId;
+    const ownerId = cart.ownerId;
+    const itemExists = await CartModel.findOne({ productId, ownerId });
+    let response;
+    if(itemExists){
+      response = await CartModel.findOneAndUpdate(
+        { productId, ownerId }, 
+        { $inc: { quantity: 1 } }, 
+        { upsert: true, new: true }
+      );
     }else{
-      return res.status(500).json({ data: [], msg: somethingWentWrong });
+      response = (await CartModel.create(cart));
     }
+    res.json({ msg: "Successfully added into your cart!", status: 201, data: response })
+
   }catch(error: unknown){
     console.error(error instanceof Error ? error.message : error)
-    return res.status(500).json({ data: [], msg: "Error inserting to cart" });
+    return res.json({ data: [], msg: AuthErrorCode.SOMETHING_WENT_WRONG, status: 500 });
   }
 }
 
 export const getCartItems = async (req: Request, res: Response) => {
   try{
-    const cartItems = await CartModel.find();
-    if(cartItems){
-      return res.status(201).json({ data: cartItems, msg: "cart items fetched successfully" });
-    }else{
-      return res.status(500).json({ data: [], msg: somethingWentWrong });
-    }
+    const ownerId: string = req.body.owner;
+    const cartItems = await CartModel.find({ ownerId }).populate(
+      {
+        path: "productId", 
+        select: "title image categoryId", 
+        populate: {
+          path: "categoryId",
+          select: "category"
+        }
+      });
+    return res.json({ data: cartItems, msg: "cart items fetched successfully", status: 201 });
   }catch(error: unknown) {
     console.error(error instanceof Error ? error.message : error)
-    return res.status(500).json({ data: [], msg: "Error fetching cart items" })
+    return res.json({ data: [], msg: AuthErrorCode.SOMETHING_WENT_WRONG, status: 500 })
   }
 }
 
 export const getAllProducts = async (
   req: Request,
-  res: Response,
-  next: NextFunction
+  res: Response
 ) => {
   try {
     const products = await ProductModel.find();
-    if(products){
-
-    }else{
-      return res.status(500).json({ data: [], msg: somethingWentWrong });
-    }
-    return res
-      .status(201)
-      .json({ data: products, msg: "products fetched successfully" });
+    return res.json({ data: products, msg: "products fetched successfully", status: 201 });
   } catch (error: unknown) {
     console.error(error instanceof Error ? error.message : error)
-    next(error);
-    return res.status(500).json({ data: [], msg: "Error fetching products" });
+    return res.json({ data: [], msg: AuthErrorCode.SOMETHING_WENT_WRONG, status: 500 });
   }
 };
 
@@ -68,14 +73,10 @@ export const getProductById = async (req: Request, res: Response) => {
     const product = await ProductModel.find({
       _id,
     });
-    if(product){
-      return res.status(201).json({ data: product[0], msg: "product fetched successfully" });
-    }else{
-      return res.status(500).json({ data: [], msg: somethingWentWrong });
-    }
+    return res.json({ data: product[0], msg: "product fetched successfully", status: 201 });
   } catch (error: unknown) {
     console.error(error instanceof Error ? error.message : error)
-    return res.status(500).json({ data: [], msg: "Error fetching product" });
+    return res.json({ data: [], msg: AuthErrorCode.SOMETHING_WENT_WRONG, status: 500 });
   }
 };
 
@@ -83,27 +84,19 @@ export const getProductsByCategory = async (req: Request, res: Response) => {
   const { categoryId } = req.body;
   try {
     const product = await ProductModel.find({ categoryId });
-    if(product){
-      return res.status(201).json({ data: product, msg: "products fetched successfully" });
-    }else{
-      return res.status(500).json({ data: [], msg: somethingWentWrong });
-    }
+    return res.json({ data: product, msg: "products fetched successfully", status: 201 });
   } catch (error: unknown) {
-    return res.status(500).json({ data: [], msg: "Error fetching products" });
+    return res.json({ data: [], msg: AuthErrorCode.SOMETHING_WENT_WRONG, status: 500 });
   }
 };
 
 export const getAllProductsCategory = async (req: Request, res: Response) => {
   try {
     const categories = await CategoryModel.find();
-    if(categories){
-      return res.status(201).json({ data: categories, msg: "categories fetched successfully" });
-    }else{
-      return res.status(500).json({ data: [], msg: somethingWentWrong });
-    }
+    return res.json({ data: categories, msg: "categories fetched successfully", status: 201 });
   } catch (error: unknown) {
     console.error(error instanceof Error ? error.message : error)
-    return res.status(500).json({ data: [], msg: "Error fetching categories" });
+    return res.json({ data: [], msg: AuthErrorCode.SOMETHING_WENT_WRONG, status: 500 });
   }
 }
 
@@ -114,6 +107,6 @@ export const buyNow = async (req: Request, res: Response) => {
     // await InventoryModel.create(item);
   }catch(error: unknown){
     console.error(error instanceof Error ? error.message : error)
-    return res.status(500).json({ data: [], msg: "Error buying item" })
+    return res.json({ data: [], msg: AuthErrorCode.SOMETHING_WENT_WRONG, status: 500 })
   }
 }

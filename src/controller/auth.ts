@@ -1,10 +1,12 @@
 import { Request, Response } from "express"
 import UserModel from "../model/User";
-import { handleFieldValidation, generateHash, generateToken, validateHashed, somethingWentWrong } from "../utils/global";
+import { AuthErrorCode } from "../interface/model";
+import { handleFieldValidation, generateHash, generateToken, validateHashed } from "../utils/global";
 
 export const register = async (req: Request, res: Response) => {
     try{
         const fieldValidation = handleFieldValidation(req.body);
+
         if(!fieldValidation.length){
             const { email, firstName, lastName, password, phoneNumber } = req.body;
             const isUserExists = await UserModel.findOne({ email });
@@ -12,14 +14,14 @@ export const register = async (req: Request, res: Response) => {
             const isPhoneNumberExists = await UserModel.findOne({ phoneNumber });
 
             if(isUserExists){
-                return res.status(201).json({ msg: "Email already exists!", data: []})
+                return res.json({ msg: AuthErrorCode.USER_EXISTS, data: [], status: 400 })
             }
 
             if(isPhoneNumberExists){
-                return res.status(201).json({ msg: "Phone number exists!", data: [] })
+                return res.json({ msg: AuthErrorCode.PHONE_NUMBER_EXISTS, data: [], status: 400 })
             }
 
-             const user = await UserModel.create({
+            const user = await UserModel.create({
                 fname: firstName,
                 lname: lastName,
                 email: email,
@@ -30,18 +32,7 @@ export const register = async (req: Request, res: Response) => {
 
             if(user){
                 const token = generateToken({user: { id: user._id, role: user.userType }});
-
-                res.cookie("accessToken", token, {
-                    httpOnly: true,
-                    // only works on localhost, if set to true, need to set env to production
-                    secure: false,
-                    // when set to lax, it means frontend and backend are same domain
-                    sameSite: "none",
-                    // set to 7 days
-                    maxAge: 7 * 24 * 60 * 60 * 1000,
-                })
-
-                return res.status(200).json(
+                return res.json(
                 { 
                     msg: "User Registration Succeeded!", 
                     data: {
@@ -52,15 +43,18 @@ export const register = async (req: Request, res: Response) => {
                         phoneNumber: user.phoneNumber,
                         userType: user.userType,
                         token
-                    } 
+                    },
+                    status: 200
                 })
+            } else {
+                return res.json({ msg: AuthErrorCode.SOMETHING_WENT_WRONG, data: [], status: 500 })
             }
         } else {
-            return res.status(201).json({ msg: fieldValidation, data: [] })
+            return res.json({ msg: fieldValidation, data: [], status: 400 })
         }
     }catch(error){
         console.error(error instanceof Error ? error.message : error)
-        return res.status(500).json({ msg: somethingWentWrong, data: [] })
+        return res.json({ msg: AuthErrorCode.SOMETHING_WENT_WRONG, data: [], status: 500 })
     }
 }
 
@@ -68,19 +62,11 @@ export const login = async (req: Request, res: Response) => {
     try{
         const { email, password } = req.body;
         const user = await UserModel.findOne({ email });
+        console.log(email, password);
 
         if(user && (await validateHashed(password, user.password))){
             const token = generateToken({user: { id: user._id, role: user.userType }});
-            res.cookie("accessToken", token, {
-                httpOnly: true,
-                // only works on localhost, if set to true, need to set env to production
-                secure: false,
-                // when set to lax, it means frontend and backend are same domain
-                sameSite: "none",
-                // set to 7 days
-                maxAge: 7 * 24 * 60 * 60 * 1000,
-            })
-            return res.status(200).json({
+            return res.json({
                 msg: "login successfully!", 
                 data: {
                     id: user._id,
@@ -88,17 +74,20 @@ export const login = async (req: Request, res: Response) => {
                     lname: user.lname,
                     email: user.email,
                     phoneNumber: user.phoneNumber,
-                    userType: user.userType
-                }
+                    userType: user.userType,
+                    token
+                },
+                status: 200
             })
         } else {
-            return res.status(401).json({
+            return res.json({
                 msg: "Invalid Credentials!",
-                data: []
+                data: [],
+                status: 401
             })
         }
     }catch(error: unknown) {
         console.error(error instanceof Error ? error.message : error)
-        return res.status(500).json({ msg: somethingWentWrong, data: [] })
+        return res.json({ msg: AuthErrorCode.SOMETHING_WENT_WRONG, data: [], status: 500 })
     }
 }
