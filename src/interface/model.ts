@@ -30,6 +30,7 @@ export interface ICart {
   unitPrice: number;
   quantity: number;
   ownerId: Types.ObjectId;
+  status: 'active' | 'inactive';
 }
 
 export interface AuthHeader extends JwtPayload {
@@ -50,6 +51,26 @@ export interface AuthErrorCode {
   SOMETHING_WENT_WRONG: string,
   PHONE_NUMBER_EXISTS: string,
   USER_EXISTS: string,
+}
+
+export interface IOrder {
+  items: IOrderProduct[],
+  ownerId: Types.ObjectId,
+  firstName: string,
+  lastName: string,
+  address: string,
+  phoneNumber: number,
+  city: string,
+  zipCode: string,
+  totalPrice: number,
+  modeOfPayment: "GCASH" | "COD" | "DEBIT" | "CREDIT",
+  status: "PENDING" | "COMPLETED" | "INVALID" | "SHIPPED" | "CANCELLED"
+}
+
+export interface IOrderProduct {
+  productId: Types.ObjectId,
+  quantity: number,
+  unitPrice: number
 }
 
 export const AuthErrorCode: AuthErrorCode = {

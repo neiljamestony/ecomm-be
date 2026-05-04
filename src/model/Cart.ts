@@ -17,6 +17,11 @@ const CartSchema = new Schema<ICart>({
     ownerId: {
         type: Schema.Types.ObjectId,
         ref: "User"
+    },
+    status: {
+        type: String,
+        default: "active",
+        required: true
     }
 })
 

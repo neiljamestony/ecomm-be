@@ -4,8 +4,8 @@ import { CustomError } from "../interface/model";
 import jwt from "jsonwebtoken";
 import { env } from "./env";
 
-export const generateToken = (payload: object) =>
-  jwt.sign(payload, env.authSecret, { expiresIn: "7d" });
+export const generateToken = (payload: object, type: "login" | "logout") =>
+  jwt.sign(payload, env.authSecret, { expiresIn: type === "login" ? "7d" : "0d" });
 
 export const isValidEmail = (email: string) =>
   RegExp(/^[^\s@]+@[^\s@]+\.[^\s@]+$/).test(email);

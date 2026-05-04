@@ -31,7 +31,7 @@ export const register = async (req: Request, res: Response) => {
             });
 
             if(user){
-                const token = generateToken({user: { id: user._id, role: user.userType }});
+                const token = generateToken({user: { id: user._id, role: user.userType }}, "login");
                 return res.json(
                 { 
                     msg: "User Registration Succeeded!", 
@@ -62,10 +62,9 @@ export const login = async (req: Request, res: Response) => {
     try{
         const { email, password } = req.body;
         const user = await UserModel.findOne({ email });
-        console.log(email, password);
 
         if(user && (await validateHashed(password, user.password))){
-            const token = generateToken({user: { id: user._id, role: user.userType }});
+            const token = generateToken({user: { id: user._id, role: user.userType }}, "login");
             return res.json({
                 msg: "login successfully!", 
                 data: {
@@ -87,6 +86,45 @@ export const login = async (req: Request, res: Response) => {
             })
         }
     }catch(error: unknown) {
+        console.error(error instanceof Error ? error.message : error)
+        return res.json({ msg: AuthErrorCode.SOMETHING_WENT_WRONG, data: [], status: 500 })
+    }
+}
+
+export const logout = async (req: Request, res: Response) => {
+    try{
+        const { uid } = req.body;
+        const user = await UserModel.findOne({ _id: uid }, { _id: 0, password: 0, userType: 0 });
+        if(user){
+            const expiredToken = generateToken({ user: { id: user._id, role: user.userType }}, "logout");
+            res.json({ data: { token: expiredToken, uid: "" }, msg: "User logged out successfully", status: 200 })
+        }
+    }catch(error: unknown){
+        console.error(error instanceof Error ? error.message : error)
+        return res.json({ msg: AuthErrorCode.SOMETHING_WENT_WRONG, data: [], status: 500 })
+    }
+}
+
+export const fetchUserData = async (req: Request, res: Response) => {
+    try{
+        const _id = req?.user?.user?.id;
+        if(_id){
+            const user = await UserModel.findOne({ _id });
+            if(user){
+               return res.json({
+                    data: {
+                        fname: user.fname,
+                        lname: user.lname,
+                        email: user.email,
+                        phoneNumber: user.phoneNumber,
+                        userType: user.userType
+                    },
+                    status: 200
+                })
+            }
+        }
+
+    }catch(error: unknown){
         console.error(error instanceof Error ? error.message : error)
         return res.json({ msg: AuthErrorCode.SOMETHING_WENT_WRONG, data: [], status: 500 })
     }

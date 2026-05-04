@@ -4,6 +4,9 @@ import express from "express";
 import cors from "cors";
 import productRoute from "./routes/product";
 import authRoute from "./routes/auth";
+import cartRoute from './routes/cart';
+import categoryRoute from './routes/category';
+import orderRoute from './routes/order';
 import { database_connection } from "./db/config";
 import { findAvailablePort } from "./utils/global";
 
@@ -21,6 +24,9 @@ findAvailablePort(port)
     app.use(express.urlencoded({ extended: true }));
     app.use("/items", productRoute);
     app.use("/auth", authRoute);
+    app.use("/cart", cartRoute);
+    app.use("/category", categoryRoute);
+    app.use("/order", orderRoute);
     app.listen(port, () => console.log(`server running on port: ${port}`));
   })
   .catch((err) => {
